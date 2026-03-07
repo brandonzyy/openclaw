@@ -9,7 +9,6 @@ import { coerceSecretRef } from "../../config/types.secrets.js";
 import { withFileLock } from "../../infra/file-lock.js";
 import { refreshQwenPortalCredentials } from "../../providers/qwen-portal-oauth.js";
 import { resolveSecretRefString, type SecretRefResolveCache } from "../../secrets/resolve.js";
-import { refreshChutesTokens } from "../chutes-oauth.js";
 import { normalizeProviderId } from "../model-selection.js";
 import { AUTH_STORE_LOCK_OPTIONS, log } from "./constants.js";
 import { resolveTokenExpiryState } from "./credential-state.js";
@@ -181,14 +180,7 @@ async function refreshOAuthTokenWithLock(params: {
     };
 
     const result =
-      String(cred.provider) === "chutes"
-        ? await (async () => {
-            const newCredentials = await refreshChutesTokens({
-              credential: cred,
-            });
-            return { apiKey: newCredentials.access, newCredentials };
-          })()
-        : String(cred.provider) === "qwen-portal"
+      String(cred.provider) === "qwen-portal"
           ? await (async () => {
               const newCredentials = await refreshQwenPortalCredentials(cred);
               return { apiKey: newCredentials.access, newCredentials };

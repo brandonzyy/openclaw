@@ -1,9 +1,4 @@
 import {
-  buildHuggingfaceModelDefinition,
-  HUGGINGFACE_BASE_URL,
-  HUGGINGFACE_MODEL_CATALOG,
-} from "../agents/huggingface-models.js";
-import {
   buildKilocodeProvider,
   buildKimiCodingProvider,
   buildQianfanProvider,
@@ -11,23 +6,6 @@ import {
   QIANFAN_DEFAULT_MODEL_ID,
   XIAOMI_DEFAULT_MODEL_ID,
 } from "../agents/models-config.providers.js";
-import {
-  buildSyntheticModelDefinition,
-  SYNTHETIC_BASE_URL,
-  SYNTHETIC_DEFAULT_MODEL_REF,
-  SYNTHETIC_MODEL_CATALOG,
-} from "../agents/synthetic-models.js";
-import {
-  buildTogetherModelDefinition,
-  TOGETHER_BASE_URL,
-  TOGETHER_MODEL_CATALOG,
-} from "../agents/together-models.js";
-import {
-  buildVeniceModelDefinition,
-  VENICE_BASE_URL,
-  VENICE_DEFAULT_MODEL_REF,
-  VENICE_MODEL_CATALOG,
-} from "../agents/venice-models.js";
 import type { OpenClawConfig } from "../config/config.js";
 import type { ModelApi } from "../config/types.models.js";
 import { KILOCODE_BASE_URL } from "../providers/kilocode-shared.js";
@@ -235,45 +213,6 @@ export function applyKimiCodeConfig(cfg: OpenClawConfig): OpenClawConfig {
   return applyAgentDefaultModelPrimary(next, KIMI_CODING_MODEL_REF);
 }
 
-export function applySyntheticProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
-  const models = { ...cfg.agents?.defaults?.models };
-  models[SYNTHETIC_DEFAULT_MODEL_REF] = {
-    ...models[SYNTHETIC_DEFAULT_MODEL_REF],
-    alias: models[SYNTHETIC_DEFAULT_MODEL_REF]?.alias ?? "MiniMax M2.5",
-  };
-
-  const providers = { ...cfg.models?.providers };
-  const existingProvider = providers.synthetic;
-  const existingModels = Array.isArray(existingProvider?.models) ? existingProvider.models : [];
-  const syntheticModels = SYNTHETIC_MODEL_CATALOG.map(buildSyntheticModelDefinition);
-  const mergedModels = [
-    ...existingModels,
-    ...syntheticModels.filter(
-      (model) => !existingModels.some((existing) => existing.id === model.id),
-    ),
-  ];
-  const { apiKey: existingApiKey, ...existingProviderRest } = (existingProvider ?? {}) as Record<
-    string,
-    unknown
-  > as { apiKey?: string };
-  const resolvedApiKey = typeof existingApiKey === "string" ? existingApiKey : undefined;
-  const normalizedApiKey = resolvedApiKey?.trim();
-  providers.synthetic = {
-    ...existingProviderRest,
-    baseUrl: SYNTHETIC_BASE_URL,
-    api: "anthropic-messages",
-    ...(normalizedApiKey ? { apiKey: normalizedApiKey } : {}),
-    models: mergedModels.length > 0 ? mergedModels : syntheticModels,
-  };
-
-  return applyOnboardAuthAgentModelsAndProviders(cfg, { agentModels: models, providers });
-}
-
-export function applySyntheticConfig(cfg: OpenClawConfig): OpenClawConfig {
-  const next = applySyntheticProviderConfig(cfg);
-  return applyAgentDefaultModelPrimary(next, SYNTHETIC_DEFAULT_MODEL_REF);
-}
-
 export function applyXiaomiProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
   const models = { ...cfg.agents?.defaults?.models };
   models[XIAOMI_DEFAULT_MODEL_REF] = {
@@ -295,94 +234,6 @@ export function applyXiaomiProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
 export function applyXiaomiConfig(cfg: OpenClawConfig): OpenClawConfig {
   const next = applyXiaomiProviderConfig(cfg);
   return applyAgentDefaultModelPrimary(next, XIAOMI_DEFAULT_MODEL_REF);
-}
-
-/**
- * Apply Venice provider configuration without changing the default model.
- * Registers Venice models and sets up the provider, but preserves existing model selection.
- */
-export function applyVeniceProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
-  const models = { ...cfg.agents?.defaults?.models };
-  models[VENICE_DEFAULT_MODEL_REF] = {
-    ...models[VENICE_DEFAULT_MODEL_REF],
-    alias: models[VENICE_DEFAULT_MODEL_REF]?.alias ?? "Kimi K2.5",
-  };
-
-  const veniceModels = VENICE_MODEL_CATALOG.map(buildVeniceModelDefinition);
-  return applyProviderConfigWithModelCatalog(cfg, {
-    agentModels: models,
-    providerId: "venice",
-    api: "openai-completions",
-    baseUrl: VENICE_BASE_URL,
-    catalogModels: veniceModels,
-  });
-}
-
-/**
- * Apply Venice provider configuration AND set Venice as the default model.
- * Use this when Venice is the primary provider choice during onboarding.
- */
-export function applyVeniceConfig(cfg: OpenClawConfig): OpenClawConfig {
-  const next = applyVeniceProviderConfig(cfg);
-  return applyAgentDefaultModelPrimary(next, VENICE_DEFAULT_MODEL_REF);
-}
-
-/**
- * Apply Together provider configuration without changing the default model.
- * Registers Together models and sets up the provider, but preserves existing model selection.
- */
-export function applyTogetherProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
-  const models = { ...cfg.agents?.defaults?.models };
-  models[TOGETHER_DEFAULT_MODEL_REF] = {
-    ...models[TOGETHER_DEFAULT_MODEL_REF],
-    alias: models[TOGETHER_DEFAULT_MODEL_REF]?.alias ?? "Together AI",
-  };
-
-  const togetherModels = TOGETHER_MODEL_CATALOG.map(buildTogetherModelDefinition);
-  return applyProviderConfigWithModelCatalog(cfg, {
-    agentModels: models,
-    providerId: "together",
-    api: "openai-completions",
-    baseUrl: TOGETHER_BASE_URL,
-    catalogModels: togetherModels,
-  });
-}
-
-/**
- * Apply Together provider configuration AND set Together as the default model.
- * Use this when Together is the primary provider choice during onboarding.
- */
-export function applyTogetherConfig(cfg: OpenClawConfig): OpenClawConfig {
-  const next = applyTogetherProviderConfig(cfg);
-  return applyAgentDefaultModelPrimary(next, TOGETHER_DEFAULT_MODEL_REF);
-}
-
-/**
- * Apply Hugging Face (Inference Providers) provider configuration without changing the default model.
- */
-export function applyHuggingfaceProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
-  const models = { ...cfg.agents?.defaults?.models };
-  models[HUGGINGFACE_DEFAULT_MODEL_REF] = {
-    ...models[HUGGINGFACE_DEFAULT_MODEL_REF],
-    alias: models[HUGGINGFACE_DEFAULT_MODEL_REF]?.alias ?? "Hugging Face",
-  };
-
-  const hfModels = HUGGINGFACE_MODEL_CATALOG.map(buildHuggingfaceModelDefinition);
-  return applyProviderConfigWithModelCatalog(cfg, {
-    agentModels: models,
-    providerId: "huggingface",
-    api: "openai-completions",
-    baseUrl: HUGGINGFACE_BASE_URL,
-    catalogModels: hfModels,
-  });
-}
-
-/**
- * Apply Hugging Face provider configuration AND set Hugging Face as the default model.
- */
-export function applyHuggingfaceConfig(cfg: OpenClawConfig): OpenClawConfig {
-  const next = applyHuggingfaceProviderConfig(cfg);
-  return applyAgentDefaultModelPrimary(next, HUGGINGFACE_DEFAULT_MODEL_REF);
 }
 
 export function applyXaiProviderConfig(cfg: OpenClawConfig): OpenClawConfig {

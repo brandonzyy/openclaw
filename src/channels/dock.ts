@@ -6,14 +6,11 @@ import { inspectDiscordAccount } from "../discord/account-inspect.js";
 import {
   formatTrimmedAllowFromEntries,
   formatWhatsAppConfigAllowFromEntries,
-  resolveIMessageConfigAllowFrom,
-  resolveIMessageConfigDefaultTo,
   resolveWhatsAppConfigAllowFrom,
   resolveWhatsAppConfigDefaultTo,
 } from "../plugin-sdk/channel-config-helpers.js";
 import { requireActivePluginRegistry } from "../plugins/runtime.js";
 import { normalizeAccountId } from "../routing/session-key.js";
-import { resolveSignalAccount } from "../signal/accounts.js";
 import { inspectSlackAccount } from "../slack/account-inspect.js";
 import { resolveSlackReplyToMode } from "../slack/accounts.js";
 import { buildSlackThreadingToolContext } from "../slack/threading-tool-context.js";
@@ -24,8 +21,6 @@ import {
   resolveDiscordGroupToolPolicy,
   resolveGoogleChatGroupRequireMention,
   resolveGoogleChatGroupToolPolicy,
-  resolveIMessageGroupRequireMention,
-  resolveIMessageGroupToolPolicy,
   resolveSlackGroupRequireMention,
   resolveSlackGroupToolPolicy,
   resolveTelegramGroupRequireMention,
@@ -33,7 +28,6 @@ import {
   resolveWhatsAppGroupRequireMention,
   resolveWhatsAppGroupToolPolicy,
 } from "./plugins/group-mentions.js";
-import { normalizeSignalMessagingTarget } from "./plugins/normalize/signal.js";
 import type {
   ChannelCapabilities,
   ChannelCommandAdapter,
@@ -129,32 +123,6 @@ const formatDiscordAllowFrom = (allowFrom: Array<string | number>) =>
 function resolveDirectOrGroupChannelId(context: ChannelThreadingContext): string | undefined {
   const isDirect = context.ChatType?.toLowerCase() === "direct";
   return (isDirect ? (context.From ?? context.To) : context.To)?.trim() || undefined;
-}
-
-function buildSignalThreadToolContext(params: {
-  context: ChannelThreadingContext;
-  hasRepliedRef: ChannelThreadingToolContext["hasRepliedRef"];
-}): ChannelThreadingToolContext {
-  const currentChannelIdRaw = resolveDirectOrGroupChannelId(params.context);
-  const currentChannelId = currentChannelIdRaw
-    ? (normalizeSignalMessagingTarget(currentChannelIdRaw) ?? currentChannelIdRaw.trim())
-    : undefined;
-  return {
-    currentChannelId,
-    currentThreadTs: params.context.ReplyToId,
-    hasRepliedRef: params.hasRepliedRef,
-  };
-}
-
-function buildIMessageThreadToolContext(params: {
-  context: ChannelThreadingContext;
-  hasRepliedRef: ChannelThreadingToolContext["hasRepliedRef"];
-}): ChannelThreadingToolContext {
-  return {
-    currentChannelId: resolveDirectOrGroupChannelId(params.context),
-    currentThreadTs: params.context.ReplyToId,
-    hasRepliedRef: params.hasRepliedRef,
-  };
 }
 
 function buildThreadToolContextFromMessageThreadOrReply(params: {
@@ -499,52 +467,6 @@ const DOCKS: Record<ChatChannelId, ChannelDock> = {
         resolveSlackReplyToMode(inspectSlackAccount({ cfg, accountId }), chatType),
       allowExplicitReplyTagsWhenOff: false,
       buildToolContext: (params) => buildSlackThreadingToolContext(params),
-    },
-  },
-  signal: {
-    id: "signal",
-    capabilities: {
-      chatTypes: ["direct", "group"],
-      reactions: true,
-      media: true,
-    },
-    outbound: DEFAULT_OUTBOUND_TEXT_CHUNK_LIMIT_4000,
-    streaming: DEFAULT_BLOCK_STREAMING_COALESCE,
-    config: {
-      resolveAllowFrom: ({ cfg, accountId }) =>
-        stringifyAllowFrom(resolveSignalAccount({ cfg, accountId }).config.allowFrom ?? []),
-      formatAllowFrom: ({ allowFrom }) =>
-        trimAllowFromEntries(allowFrom)
-          .map((entry) => (entry === "*" ? "*" : normalizeE164(entry.replace(/^signal:/i, ""))))
-          .filter(Boolean),
-      resolveDefaultTo: ({ cfg, accountId }) =>
-        resolveSignalAccount({ cfg, accountId }).config.defaultTo?.trim() || undefined,
-    },
-    threading: {
-      buildToolContext: ({ context, hasRepliedRef }) =>
-        buildSignalThreadToolContext({ context, hasRepliedRef }),
-    },
-  },
-  imessage: {
-    id: "imessage",
-    capabilities: {
-      chatTypes: ["direct", "group"],
-      reactions: true,
-      media: true,
-    },
-    outbound: DEFAULT_OUTBOUND_TEXT_CHUNK_LIMIT_4000,
-    config: {
-      resolveAllowFrom: ({ cfg, accountId }) => resolveIMessageConfigAllowFrom({ cfg, accountId }),
-      formatAllowFrom: ({ allowFrom }) => formatTrimmedAllowFromEntries(allowFrom),
-      resolveDefaultTo: ({ cfg, accountId }) => resolveIMessageConfigDefaultTo({ cfg, accountId }),
-    },
-    groups: {
-      resolveRequireMention: resolveIMessageGroupRequireMention,
-      resolveToolPolicy: resolveIMessageGroupToolPolicy,
-    },
-    threading: {
-      buildToolContext: ({ context, hasRepliedRef }) =>
-        buildIMessageThreadToolContext({ context, hasRepliedRef }),
     },
   },
 };

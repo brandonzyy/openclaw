@@ -117,17 +117,6 @@ export type PluginRuntimeChannel = {
     monitorTelegramProvider: typeof import("../../telegram/monitor.js").monitorTelegramProvider;
     messageActions: typeof import("../../channels/plugins/actions/telegram.js").telegramMessageActions;
   };
-  signal: {
-    probeSignal: typeof import("../../signal/probe.js").probeSignal;
-    sendMessageSignal: typeof import("../../signal/send.js").sendMessageSignal;
-    monitorSignalProvider: typeof import("../../signal/index.js").monitorSignalProvider;
-    messageActions: typeof import("../../channels/plugins/actions/signal.js").signalMessageActions;
-  };
-  imessage: {
-    monitorIMessageProvider: typeof import("../../imessage/monitor.js").monitorIMessageProvider;
-    probeIMessage: typeof import("../../imessage/probe.js").probeIMessage;
-    sendMessageIMessage: typeof import("../../imessage/send.js").sendMessageIMessage;
-  };
   whatsapp: {
     getActiveWebListener: typeof import("../../web/active-listener.js").getActiveWebListener;
     getWebAuthAgeMs: typeof import("../../web/auth-store.js").getWebAuthAgeMs;
@@ -143,22 +132,5 @@ export type PluginRuntimeChannel = {
     monitorWebChannel: typeof import("../../channels/web/index.js").monitorWebChannel;
     handleWhatsAppAction: typeof import("../../agents/tools/whatsapp-actions.js").handleWhatsAppAction;
     createLoginTool: typeof import("../../channels/plugins/agent-tools/whatsapp-login.js").createWhatsAppLoginTool;
-  };
-  line: {
-    listLineAccountIds: typeof import("../../line/accounts.js").listLineAccountIds;
-    resolveDefaultLineAccountId: typeof import("../../line/accounts.js").resolveDefaultLineAccountId;
-    resolveLineAccount: typeof import("../../line/accounts.js").resolveLineAccount;
-    normalizeAccountId: typeof import("../../line/accounts.js").normalizeAccountId;
-    probeLineBot: typeof import("../../line/probe.js").probeLineBot;
-    sendMessageLine: typeof import("../../line/send.js").sendMessageLine;
-    pushMessageLine: typeof import("../../line/send.js").pushMessageLine;
-    pushMessagesLine: typeof import("../../line/send.js").pushMessagesLine;
-    pushFlexMessage: typeof import("../../line/send.js").pushFlexMessage;
-    pushTemplateMessage: typeof import("../../line/send.js").pushTemplateMessage;
-    pushLocationMessage: typeof import("../../line/send.js").pushLocationMessage;
-    pushTextMessageWithQuickReplies: typeof import("../../line/send.js").pushTextMessageWithQuickReplies;
-    createQuickReplyItems: typeof import("../../line/send.js").createQuickReplyItems;
-    buildTemplateMessageFromPayload: typeof import("../../line/template-messages.js").buildTemplateMessageFromPayload;
-    monitorLineProvider: typeof import("../../line/monitor.js").monitorLineProvider;
   };
 };

@@ -5,10 +5,7 @@ import { afterEach, beforeEach, describe, expect, expectTypeOf, it } from "vites
 import type { OpenClawConfig } from "../../config/config.js";
 import type { DiscordProbe } from "../../discord/probe.js";
 import type { DiscordTokenResolution } from "../../discord/token.js";
-import type { IMessageProbe } from "../../imessage/probe.js";
-import type { LineProbeResult } from "../../line/types.js";
 import { setActivePluginRegistry } from "../../plugins/runtime.js";
-import type { SignalProbe } from "../../signal/probe.js";
 import type { SlackProbe } from "../../slack/probe.js";
 import type { TelegramProbe } from "../../telegram/probe.js";
 import type { TelegramTokenResolution } from "../../telegram/token.js";
@@ -66,7 +63,7 @@ describe("channel plugin registry", () => {
 
   it("sorts channel plugins by configured order", () => {
     const registry = createTestRegistry(
-      ["slack", "telegram", "signal"].map((id) => ({
+      ["slack", "telegram", "discord"].map((id) => ({
         pluginId: id,
         plugin: createPlugin(id),
         source: "test",
@@ -74,7 +71,7 @@ describe("channel plugin registry", () => {
     );
     setActivePluginRegistry(registry);
     const pluginIds = listChannelPlugins().map((plugin) => plugin.id);
-    expect(pluginIds).toEqual(["telegram", "slack", "signal"]);
+    expect(pluginIds).toEqual(["telegram", "discord", "slack"]);
   });
 
   it("refreshes cached channel lookups when the same registry instance is re-activated", () => {
@@ -283,17 +280,6 @@ describe("BaseProbeResult assignability", () => {
     expectTypeOf<SlackProbe>().toMatchTypeOf<BaseProbeResult>();
   });
 
-  it("SignalProbe satisfies BaseProbeResult", () => {
-    expectTypeOf<SignalProbe>().toMatchTypeOf<BaseProbeResult>();
-  });
-
-  it("IMessageProbe satisfies BaseProbeResult", () => {
-    expectTypeOf<IMessageProbe>().toMatchTypeOf<BaseProbeResult>();
-  });
-
-  it("LineProbeResult satisfies BaseProbeResult", () => {
-    expectTypeOf<LineProbeResult>().toMatchTypeOf<BaseProbeResult>();
-  });
 });
 
 describe("BaseTokenResolution assignability", () => {

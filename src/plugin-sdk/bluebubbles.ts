@@ -63,14 +63,6 @@ export {
 } from "../config/types.secrets.js";
 export { ToolPolicySchema } from "../config/zod-schema.agent-runtime.js";
 export { MarkdownConfigSchema } from "../config/zod-schema.core.js";
-export type { ParsedChatTarget } from "../imessage/target-parsing-helpers.js";
-export {
-  parseChatAllowTargetPrefixes,
-  parseChatTargetPrefixesOrThrow,
-  resolveServicePrefixedAllowTarget,
-  resolveServicePrefixedTarget,
-} from "../imessage/target-parsing-helpers.js";
-export { stripMarkdown } from "../line/markdown-to-line.js";
 export { emptyPluginConfigSchema } from "../plugins/config-schema.js";
 export type { PluginRuntime } from "../plugins/runtime/types.js";
 export type { OpenClawPluginApi } from "../plugins/types.js";

@@ -11,7 +11,6 @@ import {
 } from "../../config/config.js";
 import { resolveDiscordAccount } from "../../discord/accounts.js";
 import { resolveDiscordUserAllowlist } from "../../discord/resolve-users.js";
-import { resolveIMessageAccount } from "../../imessage/accounts.js";
 import { isBlockedObjectKey } from "../../infra/prototype-keys.js";
 import {
   addChannelAllowFromStoreEntry,
@@ -23,7 +22,6 @@ import {
   normalizeAccountId,
   normalizeOptionalAccountId,
 } from "../../routing/session-key.js";
-import { resolveSignalAccount } from "../../signal/accounts.js";
 import { resolveSlackAccount } from "../../slack/accounts.js";
 import { resolveSlackUserAllowlist } from "../../slack/resolve-users.js";
 import { resolveTelegramAccount } from "../../telegram/accounts.js";
@@ -286,9 +284,7 @@ function resolveChannelAllowFromPaths(
 ): string[] | null {
   const supportsGroupAllowlist =
     channelId === "telegram" ||
-    channelId === "whatsapp" ||
-    channelId === "signal" ||
-    channelId === "imessage";
+    channelId === "whatsapp";
   if (scope === "all") {
     return null;
   }
@@ -422,12 +418,6 @@ export const handleAllowlistCommand: CommandHandler = async (params, allowTextCo
       groupAllowFrom = (account.groupAllowFrom ?? []).map(String);
       dmPolicy = account.dmPolicy;
       groupPolicy = account.groupPolicy;
-    } else if (channelId === "signal") {
-      const account = resolveSignalAccount({ cfg: params.cfg, accountId });
-      ({ dmAllowFrom, groupAllowFrom, dmPolicy, groupPolicy } = extractConfigAllowlist(account));
-    } else if (channelId === "imessage") {
-      const account = resolveIMessageAccount({ cfg: params.cfg, accountId });
-      ({ dmAllowFrom, groupAllowFrom, dmPolicy, groupPolicy } = extractConfigAllowlist(account));
     } else if (channelId === "slack") {
       const account = resolveSlackAccount({ cfg: params.cfg, accountId });
       dmAllowFrom = (account.config.allowFrom ?? account.config.dm?.allowFrom ?? []).map(String);

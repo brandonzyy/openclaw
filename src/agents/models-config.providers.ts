@@ -3,10 +3,6 @@ import type { ModelDefinitionConfig } from "../config/types.models.js";
 import { coerceSecretRef } from "../config/types.secrets.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import {
-  DEFAULT_COPILOT_API_BASE_URL,
-  resolveCopilotApiToken,
-} from "../providers/github-copilot-token.js";
-import {
   KILOCODE_BASE_URL,
   KILOCODE_DEFAULT_CONTEXT_WINDOW,
   KILOCODE_DEFAULT_COST,
@@ -34,25 +30,8 @@ import {
   DOUBAO_CODING_BASE_URL,
   DOUBAO_CODING_MODEL_CATALOG,
 } from "./doubao-models.js";
-import {
-  discoverHuggingfaceModels,
-  HUGGINGFACE_BASE_URL,
-  HUGGINGFACE_MODEL_CATALOG,
-  buildHuggingfaceModelDefinition,
-} from "./huggingface-models.js";
 import { resolveAwsSdkEnvVarName, resolveEnvApiKey } from "./model-auth.js";
 import { OLLAMA_NATIVE_BASE_URL } from "./ollama-stream.js";
-import {
-  buildSyntheticModelDefinition,
-  SYNTHETIC_BASE_URL,
-  SYNTHETIC_MODEL_CATALOG,
-} from "./synthetic-models.js";
-import {
-  TOGETHER_BASE_URL,
-  TOGETHER_MODEL_CATALOG,
-  buildTogetherModelDefinition,
-} from "./together-models.js";
-import { discoverVeniceModels, VENICE_BASE_URL } from "./venice-models.js";
 
 type ModelsConfig = NonNullable<OpenClawConfig["models"]>;
 export type ProviderConfig = NonNullable<ModelsConfig["providers"]>[string];
@@ -698,14 +677,6 @@ function buildQwenPortalProvider(): ProviderConfig {
   };
 }
 
-function buildSyntheticProvider(): ProviderConfig {
-  return {
-    baseUrl: SYNTHETIC_BASE_URL,
-    api: "anthropic-messages",
-    models: SYNTHETIC_MODEL_CATALOG.map(buildSyntheticModelDefinition),
-  };
-}
-
 function buildDoubaoProvider(): ProviderConfig {
   return {
     baseUrl: DOUBAO_BASE_URL,
@@ -756,15 +727,6 @@ export function buildXiaomiProvider(): ProviderConfig {
   };
 }
 
-async function buildVeniceProvider(): Promise<ProviderConfig> {
-  const models = await discoverVeniceModels();
-  return {
-    baseUrl: VENICE_BASE_URL,
-    api: "openai-completions",
-    models,
-  };
-}
-
 async function buildOllamaProvider(
   configuredBaseUrl?: string,
   opts?: { quiet?: boolean },
@@ -774,33 +736,6 @@ async function buildOllamaProvider(
     baseUrl: resolveOllamaApiBase(configuredBaseUrl),
     api: "ollama",
     models,
-  };
-}
-
-async function buildHuggingfaceProvider(apiKey?: string): Promise<ProviderConfig> {
-  // Resolve env var name to value for discovery (GET /v1/models requires Bearer token).
-  const resolvedSecret =
-    apiKey?.trim() !== ""
-      ? /^[A-Z][A-Z0-9_]*$/.test(apiKey!.trim())
-        ? (process.env[apiKey!.trim()] ?? "").trim()
-        : apiKey!.trim()
-      : "";
-  const models =
-    resolvedSecret !== ""
-      ? await discoverHuggingfaceModels(resolvedSecret)
-      : HUGGINGFACE_MODEL_CATALOG.map(buildHuggingfaceModelDefinition);
-  return {
-    baseUrl: HUGGINGFACE_BASE_URL,
-    api: "openai-completions",
-    models,
-  };
-}
-
-function buildTogetherProvider(): ProviderConfig {
-  return {
-    baseUrl: TOGETHER_BASE_URL,
-    api: "openai-completions",
-    models: TOGETHER_MODEL_CATALOG.map(buildTogetherModelDefinition),
   };
 }
 
@@ -958,20 +893,6 @@ export async function resolveImplicitProviders(params: {
     providers["kimi-coding"] = { ...buildKimiCodingProvider(), apiKey: kimiCodingKey };
   }
 
-  const syntheticKey =
-    resolveEnvApiKeyVarName("synthetic") ??
-    resolveApiKeyFromProfiles({ provider: "synthetic", store: authStore });
-  if (syntheticKey) {
-    providers.synthetic = { ...buildSyntheticProvider(), apiKey: syntheticKey };
-  }
-
-  const veniceKey =
-    resolveEnvApiKeyVarName("venice") ??
-    resolveApiKeyFromProfiles({ provider: "venice", store: authStore });
-  if (veniceKey) {
-    providers.venice = { ...(await buildVeniceProvider()), apiKey: veniceKey };
-  }
-
   const qwenProfiles = listProfilesForProvider(authStore, "qwen-portal");
   if (qwenProfiles.length > 0) {
     providers["qwen-portal"] = {
@@ -1087,27 +1008,6 @@ export async function resolveImplicitProviders(params: {
     }
   }
 
-  const togetherKey =
-    resolveEnvApiKeyVarName("together") ??
-    resolveApiKeyFromProfiles({ provider: "together", store: authStore });
-  if (togetherKey) {
-    providers.together = {
-      ...buildTogetherProvider(),
-      apiKey: togetherKey,
-    };
-  }
-
-  const huggingfaceKey =
-    resolveEnvApiKeyVarName("huggingface") ??
-    resolveApiKeyFromProfiles({ provider: "huggingface", store: authStore });
-  if (huggingfaceKey) {
-    const hfProvider = await buildHuggingfaceProvider(huggingfaceKey);
-    providers.huggingface = {
-      ...hfProvider,
-      apiKey: huggingfaceKey,
-    };
-  }
-
   const qianfanKey =
     resolveEnvApiKeyVarName("qianfan") ??
     resolveApiKeyFromProfiles({ provider: "qianfan", store: authStore });
@@ -1137,64 +1037,6 @@ export async function resolveImplicitProviders(params: {
   }
 
   return providers;
-}
-
-export async function resolveImplicitCopilotProvider(params: {
-  agentDir: string;
-  env?: NodeJS.ProcessEnv;
-}): Promise<ProviderConfig | null> {
-  const env = params.env ?? process.env;
-  const authStore = ensureAuthProfileStore(params.agentDir, {
-    allowKeychainPrompt: false,
-  });
-  const hasProfile = listProfilesForProvider(authStore, "github-copilot").length > 0;
-  const envToken = env.COPILOT_GITHUB_TOKEN ?? env.GH_TOKEN ?? env.GITHUB_TOKEN;
-  const githubToken = (envToken ?? "").trim();
-
-  if (!hasProfile && !githubToken) {
-    return null;
-  }
-
-  let selectedGithubToken = githubToken;
-  if (!selectedGithubToken && hasProfile) {
-    // Use the first available profile as a default for discovery (it will be
-    // re-resolved per-run by the embedded runner).
-    const profileId = listProfilesForProvider(authStore, "github-copilot")[0];
-    const profile = profileId ? authStore.profiles[profileId] : undefined;
-    if (profile && profile.type === "token") {
-      selectedGithubToken = profile.token?.trim() ?? "";
-      if (!selectedGithubToken) {
-        const tokenRef = coerceSecretRef(profile.tokenRef);
-        if (tokenRef?.source === "env" && tokenRef.id.trim()) {
-          selectedGithubToken = (env[tokenRef.id] ?? process.env[tokenRef.id] ?? "").trim();
-        }
-      }
-    }
-  }
-
-  let baseUrl = DEFAULT_COPILOT_API_BASE_URL;
-  if (selectedGithubToken) {
-    try {
-      const token = await resolveCopilotApiToken({
-        githubToken: selectedGithubToken,
-        env,
-      });
-      baseUrl = token.baseUrl;
-    } catch {
-      baseUrl = DEFAULT_COPILOT_API_BASE_URL;
-    }
-  }
-
-  // We deliberately do not write pi-coding-agent auth.json here.
-  // OpenClaw keeps auth in auth-profiles and resolves runtime availability from that store.
-
-  // We intentionally do NOT define custom models for Copilot in models.json.
-  // pi-coding-agent treats providers with models as replacements requiring apiKey.
-  // We only override baseUrl; the model list comes from pi-ai built-ins.
-  return {
-    baseUrl,
-    models: [],
-  } satisfies ProviderConfig;
 }
 
 export async function resolveImplicitBedrockProvider(params: {

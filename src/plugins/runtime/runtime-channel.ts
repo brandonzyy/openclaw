@@ -37,7 +37,6 @@ import { createReplyDispatcherWithTyping } from "../../auto-reply/reply/reply-di
 import { removeAckReactionAfterReply, shouldAckReaction } from "../../channels/ack-reactions.js";
 import { resolveCommandAuthorizedFromAuthorizers } from "../../channels/command-gating.js";
 import { discordMessageActions } from "../../channels/plugins/actions/discord.js";
-import { signalMessageActions } from "../../channels/plugins/actions/signal.js";
 import { telegramMessageActions } from "../../channels/plugins/actions/telegram.js";
 import { recordInboundSession } from "../../channels/session.js";
 import {
@@ -61,29 +60,7 @@ import { probeDiscord } from "../../discord/probe.js";
 import { resolveDiscordChannelAllowlist } from "../../discord/resolve-channels.js";
 import { resolveDiscordUserAllowlist } from "../../discord/resolve-users.js";
 import { sendMessageDiscord, sendPollDiscord } from "../../discord/send.js";
-import { monitorIMessageProvider } from "../../imessage/monitor.js";
-import { probeIMessage } from "../../imessage/probe.js";
-import { sendMessageIMessage } from "../../imessage/send.js";
 import { getChannelActivity, recordChannelActivity } from "../../infra/channel-activity.js";
-import {
-  listLineAccountIds,
-  normalizeAccountId as normalizeLineAccountId,
-  resolveDefaultLineAccountId,
-  resolveLineAccount,
-} from "../../line/accounts.js";
-import { monitorLineProvider } from "../../line/monitor.js";
-import { probeLineBot } from "../../line/probe.js";
-import {
-  createQuickReplyItems,
-  pushFlexMessage,
-  pushLocationMessage,
-  pushMessageLine,
-  pushMessagesLine,
-  pushTemplateMessage,
-  pushTextMessageWithQuickReplies,
-  sendMessageLine,
-} from "../../line/send.js";
-import { buildTemplateMessageFromPayload } from "../../line/template-messages.js";
 import { convertMarkdownTables } from "../../markdown/tables.js";
 import { fetchRemoteMedia } from "../../media/fetch.js";
 import { saveMediaBuffer } from "../../media/store.js";
@@ -93,9 +70,6 @@ import {
   upsertChannelPairingRequest,
 } from "../../pairing/pairing-store.js";
 import { resolveAgentRoute } from "../../routing/resolve-route.js";
-import { monitorSignalProvider } from "../../signal/index.js";
-import { probeSignal } from "../../signal/probe.js";
-import { sendMessageSignal } from "../../signal/send.js";
 import {
   listSlackDirectoryGroupsLive,
   listSlackDirectoryPeersLive,
@@ -230,34 +204,6 @@ export function createRuntimeChannel(): PluginRuntime["channel"] {
       monitorTelegramProvider,
       messageActions: telegramMessageActions,
     },
-    signal: {
-      probeSignal,
-      sendMessageSignal,
-      monitorSignalProvider,
-      messageActions: signalMessageActions,
-    },
-    imessage: {
-      monitorIMessageProvider,
-      probeIMessage,
-      sendMessageIMessage,
-    },
     whatsapp: createRuntimeWhatsApp(),
-    line: {
-      listLineAccountIds,
-      resolveDefaultLineAccountId,
-      resolveLineAccount,
-      normalizeAccountId: normalizeLineAccountId,
-      probeLineBot,
-      sendMessageLine,
-      pushMessageLine,
-      pushMessagesLine,
-      pushFlexMessage,
-      pushTemplateMessage,
-      pushLocationMessage,
-      pushTextMessageWithQuickReplies,
-      createQuickReplyItems,
-      buildTemplateMessageFromPayload,
-      monitorLineProvider,
-    },
   };
 }

@@ -8,7 +8,6 @@ import {
   normalizeProviders,
   type ProviderConfig,
   resolveImplicitBedrockProvider,
-  resolveImplicitCopilotProvider,
   resolveImplicitProviders,
 } from "./models-config.providers.js";
 
@@ -129,11 +128,6 @@ async function resolveProvidersForModelsJson(params: {
     providers["amazon-bedrock"] = existing
       ? mergeProviderModels(implicitBedrock, existing)
       : implicitBedrock;
-  }
-
-  const implicitCopilot = await resolveImplicitCopilotProvider({ agentDir });
-  if (implicitCopilot && !providers["github-copilot"]) {
-    providers["github-copilot"] = implicitCopilot;
   }
   return providers;
 }

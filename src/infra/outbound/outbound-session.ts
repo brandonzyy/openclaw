@@ -5,15 +5,8 @@ import type { ChannelId } from "../../channels/plugins/types.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import { recordSessionMetaFromInbound, resolveStorePath } from "../../config/sessions.js";
 import { parseDiscordTarget } from "../../discord/targets.js";
-import { parseIMessageTarget, normalizeIMessageHandle } from "../../imessage/targets.js";
 import { buildAgentSessionKey, type RoutePeer } from "../../routing/resolve-route.js";
 import { resolveThreadSessionKeys } from "../../routing/session-key.js";
-import {
-  looksLikeUuid,
-  resolveSignalPeerId,
-  resolveSignalRecipient,
-  resolveSignalSender,
-} from "../../signal/identity.js";
 import { resolveSlackAccount } from "../../slack/accounts.js";
 import { createSlackWebClient } from "../../slack/client.js";
 import { normalizeAllowListLower } from "../../slack/monitor/allow-list.js";
@@ -353,131 +346,6 @@ function resolveWhatsAppSession(
     chatType: isGroup ? "group" : "direct",
     from: normalized,
     to: normalized,
-  };
-}
-
-function resolveSignalSession(
-  params: ResolveOutboundSessionRouteParams,
-): OutboundSessionRoute | null {
-  const stripped = stripProviderPrefix(params.target, "signal");
-  const lowered = stripped.toLowerCase();
-  if (lowered.startsWith("group:")) {
-    const groupId = stripped.slice("group:".length).trim();
-    if (!groupId) {
-      return null;
-    }
-    const peer: RoutePeer = { kind: "group", id: groupId };
-    const baseSessionKey = buildBaseSessionKey({
-      cfg: params.cfg,
-      agentId: params.agentId,
-      channel: "signal",
-      accountId: params.accountId,
-      peer,
-    });
-    return {
-      sessionKey: baseSessionKey,
-      baseSessionKey,
-      peer,
-      chatType: "group",
-      from: `group:${groupId}`,
-      to: `group:${groupId}`,
-    };
-  }
-
-  let recipient = stripped.trim();
-  if (lowered.startsWith("username:")) {
-    recipient = stripped.slice("username:".length).trim();
-  } else if (lowered.startsWith("u:")) {
-    recipient = stripped.slice("u:".length).trim();
-  }
-  if (!recipient) {
-    return null;
-  }
-
-  const uuidCandidate = recipient.toLowerCase().startsWith("uuid:")
-    ? recipient.slice("uuid:".length)
-    : recipient;
-  const sender = resolveSignalSender({
-    sourceUuid: looksLikeUuid(uuidCandidate) ? uuidCandidate : null,
-    sourceNumber: looksLikeUuid(uuidCandidate) ? null : recipient,
-  });
-  const peerId = sender ? resolveSignalPeerId(sender) : recipient;
-  const displayRecipient = sender ? resolveSignalRecipient(sender) : recipient;
-  const peer: RoutePeer = { kind: "direct", id: peerId };
-  const baseSessionKey = buildBaseSessionKey({
-    cfg: params.cfg,
-    agentId: params.agentId,
-    channel: "signal",
-    accountId: params.accountId,
-    peer,
-  });
-  return {
-    sessionKey: baseSessionKey,
-    baseSessionKey,
-    peer,
-    chatType: "direct",
-    from: `signal:${displayRecipient}`,
-    to: `signal:${displayRecipient}`,
-  };
-}
-
-function resolveIMessageSession(
-  params: ResolveOutboundSessionRouteParams,
-): OutboundSessionRoute | null {
-  const parsed = parseIMessageTarget(params.target);
-  if (parsed.kind === "handle") {
-    const handle = normalizeIMessageHandle(parsed.to);
-    if (!handle) {
-      return null;
-    }
-    const peer: RoutePeer = { kind: "direct", id: handle };
-    const baseSessionKey = buildBaseSessionKey({
-      cfg: params.cfg,
-      agentId: params.agentId,
-      channel: "imessage",
-      accountId: params.accountId,
-      peer,
-    });
-    return {
-      sessionKey: baseSessionKey,
-      baseSessionKey,
-      peer,
-      chatType: "direct",
-      from: `imessage:${handle}`,
-      to: `imessage:${handle}`,
-    };
-  }
-
-  const peerId =
-    parsed.kind === "chat_id"
-      ? String(parsed.chatId)
-      : parsed.kind === "chat_guid"
-        ? parsed.chatGuid
-        : parsed.chatIdentifier;
-  if (!peerId) {
-    return null;
-  }
-  const peer: RoutePeer = { kind: "group", id: peerId };
-  const baseSessionKey = buildBaseSessionKey({
-    cfg: params.cfg,
-    agentId: params.agentId,
-    channel: "imessage",
-    accountId: params.accountId,
-    peer,
-  });
-  const toPrefix =
-    parsed.kind === "chat_id"
-      ? "chat_id"
-      : parsed.kind === "chat_guid"
-        ? "chat_guid"
-        : "chat_identifier";
-  return {
-    sessionKey: baseSessionKey,
-    baseSessionKey,
-    peer,
-    chatType: "group",
-    from: `imessage:group:${peerId}`,
-    to: `${toPrefix}:${peerId}`,
   };
 }
 
@@ -902,8 +770,6 @@ const OUTBOUND_SESSION_RESOLVERS: Partial<Record<ChannelId, OutboundSessionResol
   discord: resolveDiscordSession,
   telegram: resolveTelegramSession,
   whatsapp: resolveWhatsAppSession,
-  signal: resolveSignalSession,
-  imessage: resolveIMessageSession,
   matrix: resolveMatrixSession,
   msteams: resolveMSTeamsSession,
   mattermost: resolveMattermostSession,

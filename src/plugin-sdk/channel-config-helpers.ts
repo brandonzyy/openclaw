@@ -1,6 +1,5 @@
 import { normalizeWhatsAppAllowFromEntries } from "../channels/plugins/normalize/whatsapp.js";
 import type { OpenClawConfig } from "../config/config.js";
-import { resolveIMessageAccount } from "../imessage/accounts.js";
 import { normalizeAccountId } from "../routing/session-key.js";
 import { resolveWhatsAppAccount } from "../web/accounts.js";
 
@@ -27,18 +26,4 @@ export function resolveWhatsAppConfigDefaultTo(params: {
   const normalized = normalizeAccountId(params.accountId);
   const account = root?.accounts?.[normalized];
   return (account?.defaultTo ?? root?.defaultTo)?.trim() || undefined;
-}
-
-export function resolveIMessageConfigAllowFrom(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): string[] {
-  return (resolveIMessageAccount(params).config.allowFrom ?? []).map((entry) => String(entry));
-}
-
-export function resolveIMessageConfigDefaultTo(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): string | undefined {
-  return resolveIMessageAccount(params).config.defaultTo?.trim() || undefined;
 }

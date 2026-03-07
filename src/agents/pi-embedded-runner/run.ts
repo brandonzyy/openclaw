@@ -450,38 +450,7 @@ export async function runEmbeddedPiAgent(
       };
 
       const refreshCopilotToken = async (reason: string): Promise<void> => {
-        if (!copilotTokenState) {
-          return;
-        }
-        if (copilotTokenState.refreshInFlight) {
-          await copilotTokenState.refreshInFlight;
-          return;
-        }
-        const { resolveCopilotApiToken } = await import("../../providers/github-copilot-token.js");
-        copilotTokenState.refreshInFlight = (async () => {
-          const githubToken = copilotTokenState.githubToken.trim();
-          if (!githubToken) {
-            throw new Error("Copilot refresh requires a GitHub token.");
-          }
-          log.debug(`Refreshing GitHub Copilot token (${reason})...`);
-          const copilotToken = await resolveCopilotApiToken({
-            githubToken,
-          });
-          authStorage.setRuntimeApiKey(model.provider, copilotToken.token);
-          copilotTokenState.expiresAt = copilotToken.expiresAt;
-          const remaining = copilotToken.expiresAt - Date.now();
-          log.debug(
-            `Copilot token refreshed; expires in ${Math.max(0, Math.floor(remaining / 1000))}s.`,
-          );
-        })()
-          .catch((err) => {
-            log.warn(`Copilot token refresh failed: ${describeUnknownError(err)}`);
-            throw err;
-          })
-          .finally(() => {
-            copilotTokenState.refreshInFlight = undefined;
-          });
-        await copilotTokenState.refreshInFlight;
+        // Copilot token refresh removed
       };
 
       const scheduleCopilotRefresh = (): void => {
@@ -600,21 +569,7 @@ export async function runEmbeddedPiAgent(
           lastProfileId = resolvedProfileId;
           return;
         }
-        if (model.provider === "github-copilot") {
-          const { resolveCopilotApiToken } =
-            await import("../../providers/github-copilot-token.js");
-          const copilotToken = await resolveCopilotApiToken({
-            githubToken: apiKeyInfo.apiKey,
-          });
-          authStorage.setRuntimeApiKey(model.provider, copilotToken.token);
-          if (copilotTokenState) {
-            copilotTokenState.githubToken = apiKeyInfo.apiKey;
-            copilotTokenState.expiresAt = copilotToken.expiresAt;
-            scheduleCopilotRefresh();
-          }
-        } else {
-          authStorage.setRuntimeApiKey(model.provider, apiKeyInfo.apiKey);
-        }
+        authStorage.setRuntimeApiKey(model.provider, apiKeyInfo.apiKey);
         lastProfileId = apiKeyInfo.profileId;
       };
 

@@ -1,14 +1,29 @@
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import type { OAuthCredentials } from "@mariozechner/pi-ai";
-import type { ChutesOAuthAppConfig } from "../agents/chutes-oauth.js";
-import {
-  CHUTES_AUTHORIZE_ENDPOINT,
-  exchangeChutesCodeForTokens,
-  generateChutesPkce,
-  parseOAuthCallbackInput,
-} from "../agents/chutes-oauth.js";
 import { isLoopbackHost } from "../gateway/net.js";
+
+// Chutes OAuth support removed - stub types and functions
+type ChutesOAuthAppConfig = {
+  clientId: string;
+  clientSecret?: string;
+  redirectUri: string;
+  scopes?: string[];
+};
+
+const CHUTES_AUTHORIZE_ENDPOINT = "";
+
+function generateChutesPkce() {
+  return { codeVerifier: "", codeChallenge: "", verifier: "", challenge: "" };
+}
+
+function parseOAuthCallbackInput(_input: string, _expectedState?: string) {
+  return { code: "", state: "" };
+}
+
+async function exchangeChutesCodeForTokens(_params: unknown): Promise<OAuthCredentials> {
+  throw new Error("Chutes OAuth support has been removed");
+}
 
 type OAuthPrompt = {
   message: string;
@@ -34,8 +49,8 @@ function parseManualOAuthInput(
   }
 
   const parsed = parseOAuthCallbackInput(trimmed, expectedState);
-  if ("error" in parsed) {
-    throw new Error(parsed.error);
+  if (parsed.code === "" && parsed.state === "") {
+    throw new Error("OAuth callback parsing failed");
   }
   if (parsed.state !== expectedState) {
     throw new Error("Invalid OAuth state");
@@ -174,7 +189,7 @@ export async function loginChutes(params: {
   const url = buildAuthorizeUrl({
     clientId: params.app.clientId,
     redirectUri: params.app.redirectUri,
-    scopes: params.app.scopes,
+    scopes: params.app.scopes ?? [],
     state,
     challenge,
   });
