@@ -3,14 +3,14 @@ import type { ChannelId } from "../../channels/plugins/types.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import { DiscordUiContainer } from "../../discord/ui.js";
 
-export type CrossContextComponentsBuilder = (message: string) => TopLevelComponents[];
+export type CrossContextComponentsBuilder = (message: string) => unknown[];
 
 export type CrossContextComponentsFactory = (params: {
   originLabel: string;
   message: string;
   cfg: OpenClawConfig;
   accountId?: string | null;
-}) => TopLevelComponents[];
+}) => unknown[];
 
 export type ChannelMessageAdapter = {
   supportsComponentsV2: boolean;

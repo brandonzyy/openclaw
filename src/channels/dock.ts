@@ -74,7 +74,8 @@ export type ChannelDock = {
   config?: Pick<
     ChannelConfigAdapter<unknown>,
     "resolveAllowFrom" | "formatAllowFrom" | "resolveDefaultTo"
-  >;
+  > &
+    Partial<Pick<ChannelConfigAdapter<unknown>, "resolveAccount">>;
   groups?: ChannelGroupAdapter;
   mentions?: ChannelMentionAdapter;
   threading?: ChannelThreadingAdapter;
