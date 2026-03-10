@@ -1,0 +1,69 @@
+{
+  // OpenClaw 中国特别版配置
+  // 生成时间: 2026-03-10T10:42:10.173Z
+  // 使用方法: 在 openclaw.json5 中添加 "$include": "./profiles/china.json5"
+
+  plugins: {
+    deny: [
+      // 频道扩展
+      "bluebubbles",
+      "discord",
+      "googlechat",
+      "imessage",
+      "line",
+      "nostr",
+      "signal",
+      "slack",
+      "telegram",
+      "tlon",
+      "twitch",
+      "whatsapp",
+      // 提供商扩展
+      "copilot-proxy",
+      "google-gemini-cli-auth",
+    ],
+  },
+
+  channels: {
+    // Discord
+    discord: { enabled: false },
+    // Google Chat
+    googlechat: { enabled: false },
+    // iMessage
+    imessage: { enabled: false },
+    // LINE
+    line: { enabled: false },
+    // Signal
+    signal: { enabled: false },
+    // Slack
+    slack: { enabled: false },
+    // Telegram
+    telegram: { enabled: false },
+    // WhatsApp
+    whatsapp: { enabled: false },
+  },
+
+  // ── 禁用的 AI 提供商（仅供参考，提供商通过环境变量控制） ──
+  // - openai (OpenAI)
+  // - anthropic (Anthropic)
+  // - google (Google Gemini)
+  // - github-copilot (GitHub Copilot)
+  // - huggingface (HuggingFace)
+  // - together (Together AI)
+  // - openrouter (OpenRouter)
+  // - vercel-ai-gateway (Vercel AI Gateway)
+  // - cloudflare-ai-gateway (Cloudflare AI Gateway)
+  // - chutes (Chutes)
+  // - xai (xAI (Grok))
+  // - venice (Venice)
+  // - zai (ZAI)
+  // - cerebras (Cerebras)
+  // - groq (Groq)
+  // - deepgram (Deepgram)
+  // - voyage (Voyage)
+  // - mistral (Mistral)
+  // - nvidia (NVIDIA)
+  // - litellm (LiteLLM)
+  // - synthetic (Synthetic)
+  // - opencode (OpenCode)
+}
