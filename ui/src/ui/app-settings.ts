@@ -168,6 +168,19 @@ export function applySettingsFromUrl(host: SettingsHost) {
     shouldCleanUrl = true;
   }
 
+  const modeRaw = params.get("mode") ?? hashParams.get("mode");
+  if (modeRaw != null) {
+    const mode = modeRaw.trim().toLowerCase();
+    if (mode === "admin") {
+      applySettings(host, { ...host.settings, chatFocusMode: false });
+    } else if (mode === "chat") {
+      applySettings(host, { ...host.settings, chatFocusMode: true });
+    }
+    params.delete("mode");
+    hashParams.delete("mode");
+    shouldCleanUrl = true;
+  }
+
   if (!shouldCleanUrl) {
     return;
   }

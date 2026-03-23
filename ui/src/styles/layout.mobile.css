@@ -14,7 +14,7 @@
   }
 
   .shell--chat-focus {
-    grid-template-rows: var(--shell-topbar-height) minmax(0, 1fr);
+    grid-template-rows: 0 minmax(0, 1fr);
   }
 
   .shell-nav,

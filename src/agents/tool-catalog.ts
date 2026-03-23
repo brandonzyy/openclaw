@@ -226,6 +226,14 @@ const CORE_TOOL_DEFINITIONS: CoreToolDefinition[] = [
     includeInOpenClawGroup: true,
   },
   {
+    id: "setup",
+    label: "setup",
+    description: "Install skills and configure MCP servers",
+    sectionId: "agents",
+    profiles: ["full"],
+    includeInOpenClawGroup: true,
+  },
+  {
     id: "image",
     label: "image",
     description: "Image understanding",

@@ -47,6 +47,15 @@
 
 .shell--chat-focus {
   grid-template-columns: 0px minmax(0, 1fr);
+  grid-template-rows: 0 1fr;
+}
+
+.shell--chat-focus .topbar {
+  display: none;
+}
+
+.shell--chat-focus .content-header {
+  display: none;
 }
 
 .shell--onboarding {
